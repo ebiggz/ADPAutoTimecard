@@ -1,27 +1,25 @@
 {
   "manifest_version": 2,
-
   "name": "ADP Auto Timecard",
   "description": "Automatically fill out your timecard with the given project code.",
   "version": "1.0",
-
   "browser_action": {
     "default_icon": "images/adp-rebel2.png",
-	"default_popup": "popup.html"
+	  "default_popup": "options.html"
   },
   "content_scripts": [
     {
       "matches": ["*://workforcenow.adp.com/*"],
       "css": ["styles.css"],
-      "js": ["jquery.js", "vue.min.js", "contentscript.js"]
+      "js": ["/resources/jquery.js", "adpAutoTimecard.js"]
     }
   ],
   "web_accessible_resources": [
-   "images/*"
+    "images/*"
   ], 
-  "options_page": "popup.html",
+  "options_page": "options.html",
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "permissions": [
-	"storage"
+	  "storage"
   ]
 }

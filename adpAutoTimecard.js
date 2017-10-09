@@ -1,4 +1,5 @@
 function shouldIgnoreRow(row) {
+	
 	var ignoredRows = 
 		["WeekHeaderRow", 
 		"ApprovedPTORow", 
@@ -117,6 +118,18 @@ function makeSureAutofillButtonExists() {
 	}
 }
 
+function verifyEverythingIsReady() {
+	//This doesnt work yet. 
+
+	var rowsPerDayText = $("#dijit_PopupMenuItem_0_text").text();
+	
+	var re = /[\w\s]+\((\d{1,2})\)\.\.\./g;
+	var result = re.exec(rowsPerDayText);
+	var numberOfRows = parseInt(result[1]);
+	
+	return numberOfRows >= savedTimeEntries.length;
+}
+
 function checkForTimeEntries() {
 	var autofillBtn = $('.autofill-btn');
 	
@@ -142,20 +155,6 @@ function checkForTimeEntries() {
 		  }
 	  });  
 	  makeSureAutofillButtonExists();
-}
-
-function verifyEverythingIsReady() {
-	//This doesnt work yet. 
-
-	var rowsPerDayText = $("#dijit_PopupMenuItem_0_text").text();
-	
-	var re = /[\w\s]+\((\d{1,2})\)\.\.\./g;
-	var result = re.exec(rowsPerDayText);
-	var numberOfRows = parseInt(result[1]);
-	
-	//dijit_MenuItem_5
-	console.log(numberOfRows);
-	return numberOfRows >= savedTimeEntries.length;
 }
 
 function waitForPageLoad() {
