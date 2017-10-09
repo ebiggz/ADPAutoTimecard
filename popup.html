@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+  <head>
+    <title>ADP Auto Timecard</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+	<link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+    <style>
+      body {
+        font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
+        font-size: 100%;
+				width: 500px;
+				padding: 20px;
+      }
+			.col {
+				padding-left: 5px;
+				padding-right: 5px;
+			}
+			button {
+				cursor: pointer;
+			}
+			.entry-btn-wrapper {
+				margin-top: 10px;
+				text-align: center;
+			}
+			.delete-btn {
+				color: red;
+				cursor: pointer;
+			}
+			.delete-btn:hover {
+				opacity: 0.6;
+			}
+			.error {
+				font-size: 12px;
+				color: red;
+			}
+    </style>
+  </head>
+  <body>
+		<h4>ADP Auto Timecard</h4>
+		<p>Automatically fills out your timecard.</p>
+		
+		<h4>Time Entries</h4>
+		<p>These are the entries that will be populated for each row in a day and then copied to all days in a pay period. Once entries are added, an <strong>Autofill</strong> button will be present on ADP's Timecard page.</p>
+		<div id="app">
+			<table class="table">
+				<thead class="thead-default">
+				<tr>
+					<th>In Time</th>
+					<th>Out Time</th>
+					<th>Project Code</th>
+					<th></th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr v-for="(te, index) in timeEntries">
+					<td>{{te.inTime}}</td>
+					<td>{{te.outTime}}</td>
+					<td>{{te.projectCode ? te.projectCode : "None"}}</td>
+					<td><span class="delete-btn" v-on:click="deleteEntryAtIndex(index)"><i class="fa fa-trash-o" aria-hidden="true"></i></span></td>
+				</tr>
+				<tr v-if="timeEntries.length < 1">
+					<td style="opacity: 0.5">No entries saved.</td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				</tbody>
+			</table>
+			<div v-if="showingAddEntryInputs">
+				<div class="container">
+					<div class="row">
+						<div class="col">
+							<input type="text" class="form-control" placeholder="In Time" v-model="newEntry.inTime">
+							<span v-show="errors.invalidInTime" class="error">Invalid time. Expecting xx:xx AM/PM</span>
+						</div>
+						<div class="col">
+							<input type="text" class="form-control" placeholder="Out Time" v-model="newEntry.outTime">
+							<span v-show="errors.invalidOutTime" class="error">Invalid time. Expecting xx:xx AM/PM</span>
+						</div>
+						<div class="col">
+							<input type="number" class="form-control" placeholder="Project Code" v-model="newEntry.projectCode">
+							<span v-show="errors.invalidProjectCode" class="error">Please specify a project code.</span>
+						</div>
+					</div>
+				</div>
+				<div class="entry-btn-wrapper">
+					<button type="button" class="btn btn-primary" v-on:click="saveNewEntry">Add</button>
+					<button type="button" class="btn btn-link" v-on:click="showingAddEntryInputs = false">Cancel</button>
+				</div>
+			</div>
+			<button type="button" class="btn btn-link" v-on:click="showingAddEntryInputs = true" v-if="!showingAddEntryInputs">+ Add Time Entry</button>
+		</div>
+		<script src="vue.min.js"></script>
+		<script src="popup.js"></script>
+  </body>
+</html>
+

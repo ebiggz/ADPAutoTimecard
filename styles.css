@@ -1,0 +1,28 @@
+  .autofill-btn {
+		padding: 11px 18px 10px 18px;
+		margin-top: 2px!important;
+		margin-bottom: 3px!important;
+		border-radius: 40px;
+		border: none;
+		margin: 0 5px 5px 5px;
+		cursor: pointer;
+		text-align: center;
+		position: relative;
+		text-transform: uppercase !important;
+		font-weight: 400;
+		font-size: 12px;
+		line-height: 14px;
+		white-space: nowrap;
+		min-width: 9.25em;
+		background-color: #F68F1E;
+		color: #ffffff;
+  }
+  
+  .autofill-btn:hover {
+		background-color: #fcab53;
+  }
+  
+  .autofill-btn:disabled {
+		background-color: lightgray;
+		cursor: not-allowed;
+  }
