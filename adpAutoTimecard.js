@@ -1,3 +1,7 @@
+function log(message) {
+	console.log(`[ATC: ${message}]`);
+}
+
 function shouldIgnoreRow(row) {
 	
 	var ignoredRows = 
@@ -17,11 +21,16 @@ function shouldIgnoreRow(row) {
 }
 
 function runATC(timeEntries) {
-   console.log("[Running ATC...]");
+   log("Running autofill...");
    
+   if(timeEntries.length < 1) {
+	   log("Attempted to run with no entries!");
+	   return;
+   }
+
    populateRows(timeEntries);
    
-   console.log("[ATC Complete!]"); 
+   log("Autofill complete!"); 
 }
 
 function populateRows(timeEntries) {
@@ -84,8 +93,7 @@ function populateRows(timeEntries) {
 				   var outTimeInput = outTimeTr.find(".dijitInputInner");				
 				   
 				   outTimeInput.val(timeEntry.outTime);
-				   outTimeInput.keyup();
-				   
+				   outTimeInput.keyup();				   
 				   
 				   // Handle Project Code
 				   var projectDiv = row.find("div[id$=WorkedJobID]");
@@ -107,95 +115,139 @@ function populateRows(timeEntries) {
 }
 
 function makeSureAutofillButtonExists() {
-    var submitButton = $(".autofill-btn");
+    var autofillButton = $(".autofill-btn");
 
-	if(submitButton.length > 0) {
+	if(autofillButton.length > 0) {
 		// auto fill button exists, check again in 3 secs
-	   	setTimeout(() => { makeSureAutofillButtonExists(); }, 3000);
+	   	setTimeout(() => { makeSureAutofillButtonExists(); }, 1500);
 	} else {
 		// Oh no we cant find the auto fill button. Wait for the page to load and load it again.
 		waitForPageLoad();
 	}
 }
 
-function verifyEverythingIsReady() {
+function verifyEverythingIsReady(entries) {
+	return true;
 	//This doesnt work yet. 
-
-	var rowsPerDayText = $("#dijit_PopupMenuItem_0_text").text();
+	var rowsPerDayText = ""
+	
+	//dijit.registry.byId("dijit_PopupMenuItem_0").label;
 	
 	var re = /[\w\s]+\((\d{1,2})\)\.\.\./g;
 	var result = re.exec(rowsPerDayText);
 	var numberOfRows = parseInt(result[1]);
 	
-	return numberOfRows >= savedTimeEntries.length;
+	return numberOfRows >= entries.length;
+}
+
+function getTimeEntries() {
+	return new Promise((resolve, reject) => {
+		chrome.storage.sync.get({
+			"timeEntries": []
+		  }, (options) => {
+			  resolve(options.timeEntries)
+		  });
+	});
 }
 
 function checkForTimeEntries() {
 	var autofillBtn = $('.autofill-btn');
 	
 	autofillBtn.hide();
-	
-	chrome.storage.sync.get({
-		"timeEntries": []
-	  }, function(options) {
-		  savedTimeEntries = options.timeEntries;
-		  if(savedTimeEntries.length > 0) {		  
-			  
-			  $('.autofill-btn').click(function(event) {
-				event.preventDefault();
+
+	getTimeEntries().then((entries) => {
+		savedTimeEntries = entries;
+
+		autofillBtn.click(function(event) {
+			event.preventDefault();
+			getTimeEntries().then((entries) => {
 				setTimeout(function() {
-					/*if(!verifyEverythingIsReady()) {
+					if(!verifyEverythingIsReady()) {
 						alert(`You do not have enough rows per day to fill out your Timecard. Please click on "Preferences" > "Rows Per Day" and select ${savedTimeEntries.length} or higher.`);
 						return;
-					}*/
-					runATC(savedTimeEntries);
-			    }, 1);				 
-			  });			  
-			  autofillBtn.show();
-		  }
-	  });  
-	  makeSureAutofillButtonExists();
+					}
+					runATC(entries);
+			    }, 1);			
+			});		
+		});
+		
+		if(entries.length < 1) {		  
+			autofillBtn.attr("disabled",true);
+			autofillBtn.attr("title","No time entries saved!");		
+		}
+
+		autofillBtn.show();
+	});
+	
+	makeSureAutofillButtonExists();
 }
 
 function waitForPageLoad() {
-	var submitButton = $("#btnSubmit");
-	
-	// Check if the submit button exists, it only will if the page has loaded
-	if(submitButton.length > 0) {
-		console.log("[ATC: Page appears to be loaded. Getting ATC ready...]");
-		
-		$('<button class="autofill-btn" style="display:none">Autofill</button>').insertBefore(submitButton);
-		
-		checkForTimeEntries();
-	} else {
-		// keep looking
-		setTimeout(() => { waitForPageLoad() }, 500);
+
+	var correctPage = false;
+	// Hacky ways to find if we are on the correct page. 
+	var url = window.location.href;
+	var pageTitle = $(".dijitTitlePaneTextNode").text();
+
+	log("Waiting for Timecard page...");
+	if(url.includes("MyTimecard")) {
+		correctPage = true;
+	} 
+	else if(pageTitle === 'My Timecard'){
+		// sometimes the url doesnt update, search for the title text
+		correctPage = true;	
 	}
+
+	if(correctPage) {
+		var submitButton = $("#btnSubmit");
+		
+		// Check if the submit button exists, it only will if the page has loaded
+		if(submitButton.length > 0) {
+			log("Page appears to be loaded. Getting ATC ready...");
+			
+			$('<button class="autofill-btn" style="display:none">Autofill</button>').insertBefore(submitButton);
+			
+			checkForTimeEntries();
+
+			log("ATC ready!");
+			return;
+		} 
+	}
+
+	setTimeout(() => { waitForPageLoad() }, 1500);
 }
 
 function startATC() {
-	console.log("[ATC: Starting ATC...]");
+	log("Starting ATC...");
 	
-	console.log("[ATC: Waiting for page load...]");
+	log("Waiting for page load...");
 	
 	waitForPageLoad();
-
-	console.log("[ADP Auto Timecard loaded.]");
 }
+ 
+startATC();
+
+chrome.runtime.onMessage.addListener(
+	(request, sender, sendResponse) => {
+	  if(request.timeEntriesUpdated) {
+		log("Detected time entry change!");
+
+		getTimeEntries().then((entries) => {
+			var autofillBtn = $('.autofill-btn');
+			
+			if(entries.length < 1) {		  
+				autofillBtn.attr("disabled",true);
+				autofillBtn.attr("title","No time entries saved!");		
+			} else {
+				autofillBtn.attr("disabled",false);
+				autofillBtn.attr("title",null);	
+			}
+
+		});		
+	  }
+});
 
 
-// Hacky ways to find if we are on the correct page. 
-var url = window.location.href;
-
-if(url.includes("MyTimecard")) {
-	startATC();
-} else {
-	// sometimes the url doesnt update, search for the title text
-	var pageTitle = $(".dijitTitlePaneTextNode").text();
-	if(pageTitle === 'My Timecard') {
-		startATC();
-	}
-}
 
 
 

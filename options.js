@@ -82,7 +82,12 @@ var app = new Vue({
 			
 			chrome.storage.sync.set({
 				timeEntries: app.timeEntries
-			}, () => {});
+			}, () => {
+				// let the content script on current active tab know the entries have been updated
+				chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+					chrome.tabs.sendMessage(tabs[0].id, { timeEntriesUpdated: true }, () => {});
+				});
+			});
 		}
 	},
 	mounted: function() {
