@@ -15,6 +15,10 @@ var app = new Vue({
 		}
 	},
 	methods: {
+		openADPTab: function() {
+			var url = "https://workforcenow.adp.com/portal/theme#/Myself_ttd_MyselfTabTimecardsAttendanceSchCategoryTLMWebMyTimecard/MyselfTabTimecardsAttendanceSchCategoryTLMWebMyTimecard";
+			window.open(url,'_blank');
+		},
 		hasErrors: function() {
 			var app = this;
 			
