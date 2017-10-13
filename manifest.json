@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "ADP Auto Timecard",
   "description": "Automatically fill out your timecard with the given project code.",
-  "version": "1.1",
+  "version": "1.2",
   "browser_action": {
     "default_icon": "images/atc-rebel16.png",
 	  "default_popup": "options.html"
