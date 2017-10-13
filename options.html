@@ -32,6 +32,7 @@
 		.error {
 			font-size: 12px;
 			color: red;
+			text-align: center;
 		}
     </style>
   </head>
@@ -70,16 +71,16 @@
 				<div class="container">
 					<div class="row">
 						<div class="col">
-							<input type="text" class="form-control" placeholder="In Time" v-model="newEntry.inTime">
-							<span v-show="errors.invalidInTime" class="error">Invalid time. Expecting xx:xx AM/PM</span>
+							<input type="text" class="form-control" placeholder="In Time" v-model="newEntry.inTime" v-on:change="normalizeTimeForType('in')" v-on:keyup.enter="saveNewEntry">
+							<div v-show="errors.invalidInTime" class="error">Invalid time. Expecting: <b>HH:MM AM/PM</b></div>
 						</div>
 						<div class="col">
-							<input type="text" class="form-control" placeholder="Out Time" v-model="newEntry.outTime">
-							<span v-show="errors.invalidOutTime" class="error">Invalid time. Expecting xx:xx AM/PM</span>
+							<input type="text" class="form-control" placeholder="Out Time" v-model="newEntry.outTime" v-on:change="normalizeTimeForType('out')" v-on:keyup.enter="saveNewEntry">
+							<div v-show="errors.invalidOutTime" class="error">Invalid time. Expecting: <b>HH:MM AM/PM</b></div>
 						</div>
 						<div class="col">
-							<input type="number" class="form-control" placeholder="Project Code" v-model="newEntry.projectCode">
-							<span v-show="errors.invalidProjectCode" class="error">Please specify a project code.</span>
+							<input type="number" class="form-control" placeholder="Project Code" v-model="newEntry.projectCode" v-on:keyup.enter="saveNewEntry">
+							<div v-show="errors.invalidProjectCode" class="error">Please specify a project code.</div>
 						</div>
 					</div>
 				</div>
