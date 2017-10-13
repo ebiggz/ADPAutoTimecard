@@ -1,23 +1,77 @@
-function log(message) {
-	console.log(`[ATC: ${message}]`);
-}
-
-function shouldIgnoreRow(row) {
+//on document ready
+$(() => {
+	// start the process
+	log("Starting ATC...");
 	
-	var ignoredRows = 
-		["WeekHeaderRow", 
-		"ApprovedPTORow", 
-		"WeekSummary", 
-		"WeekHeaderRow"];
+	log("Waiting for Timecard page load...");
 	
-	var shouldIgnore = false;
-	ignoredRows.forEach(c => {
-		if(row.hasClass(c)) {
-			shouldIgnore = true;
+	// wait till we detect the Timecard page
+	waitForPageLoad();
+	
+	// listen for an event from the Options page. This fires everytime the user adds or removes a time entry
+	chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+		if(request.timeEntriesUpdated) {
+			log("Detected time entry change!");
+	
+			updateAutofillDisableState();	
 		}
 	});
+});
+
+function waitForPageLoad() {
 	
-	return shouldIgnore;
+	var correctPage = false;
+	// Hacky ways to find if we are on the correct page. 
+	var url = window.location.href;
+	var pageTitle = $(".dijitTitlePaneTextNode").text();
+
+	log("Waiting for Timecard page...");
+	if(url.includes("MyTimecard")) {
+		correctPage = true;
+	} 
+	else if(pageTitle === 'My Timecard'){
+		// sometimes the url doesnt update, search for the title text
+		correctPage = true;	
+	}
+
+	if(correctPage) {
+		// add spinner
+		var spinner = $("#atc-loader");
+		if(spinner.length < 1) {
+			var body = $("body");
+			$(`<div class="fullscreen-center-wrapper" id="atc-loader" style="display:none"><div class="loader"></div></div>`).insertBefore(body);
+		}
+
+		//add error modal
+		var spinner = $("#error-modal-wrapper");
+		if(spinner.length < 1) {
+			var body = $("body");
+			$(`<div class="fullscreen-center-wrapper" id="error-modal-wrapper" style="display:none"><div class="error-modal"><h1>Whoops!</h1><p id="error-modal-message"></p><div><button class="adp-btn okay-btn" id="close-model-btn">Ok</button></div></div></div>`).insertBefore(body);
+
+			$("#close-model-btn").click((event)=> {
+				event.preventDefault();
+				$("#error-modal-wrapper").hide();
+			});
+		}
+
+		// add autofill button
+		var submitButton = $("#btnSubmit");
+		
+		// Check if the submit button exists, it only will if the page has loaded
+		if(submitButton.length > 0) {
+			log("Page appears to be loaded. Getting ATC ready...");
+			
+			$('<button class="adp-btn autofill-btn" style="display:none">Autofill</button>').insertBefore(submitButton);
+			
+			checkForTimeEntries();
+
+			log("ATC ready!");
+			return;
+		}
+	}
+
+	// we didnt find it, check again in a bit
+	setTimeout(() => { waitForPageLoad() }, 1500);
 }
 
 function runATC(timeEntries) {
@@ -207,7 +261,8 @@ function checkForTimeEntries() {
 			getTimeEntries().then((entries) => {
 				setTimeout(function() {
 					if(!verifyEverythingIsReady(entries)) {
-						alert(`You do not have enough rows per day to fill out your Timecard. \n\nIn the bottom right corner, click on "Preferences" > "Rows Per Day" and select ${entries.length} or higher.`);
+						$("#error-modal-message").html(`You do not have enough rows per day to fill out your Timecard. <br/><br/>In the bottom right corner, click on <b>Preferences</b> > <b>Rows Per Day</b> and select <b>${entries.length}</b> or higher.`);
+						$("#error-modal-wrapper").show();
 						return;
 					}
 					$('.autofill-btn').attr("disabled",true);
@@ -227,55 +282,10 @@ function checkForTimeEntries() {
 	makeSureAutofillButtonExists();
 }
 
-function waitForPageLoad() {
+/* Helpers */
 
-	var correctPage = false;
-	// Hacky ways to find if we are on the correct page. 
-	var url = window.location.href;
-	var pageTitle = $(".dijitTitlePaneTextNode").text();
-
-	log("Waiting for Timecard page...");
-	if(url.includes("MyTimecard")) {
-		correctPage = true;
-	} 
-	else if(pageTitle === 'My Timecard'){
-		// sometimes the url doesnt update, search for the title text
-		correctPage = true;	
-	}
-
-	if(correctPage) {
-		// add spinner
-		var spinner = $("#atc-loader");
-		if(spinner.length < 1) {
-			var body = $("body");
-			$(`<div class="loader-wrapper" id="atc-loader" style="display:none"><div class="loader"></div></div>`).insertBefore(body);
-		}
-
-		// add autofil button
-		var submitButton = $("#btnSubmit");
-		
-		// Check if the submit button exists, it only will if the page has loaded
-		if(submitButton.length > 0) {
-			log("Page appears to be loaded. Getting ATC ready...");
-			
-			$('<button class="autofill-btn" style="display:none">Autofill</button>').insertBefore(submitButton);
-			
-			checkForTimeEntries();
-
-			log("ATC ready!");
-			return;
-		}
-	}
-
-	setTimeout(() => { waitForPageLoad() }, 1500);
-}
-
-function startATC() {
-	log("Starting ATC...");
-	
-	log("Waiting for page load...");
-	
-	waitForPageLoad();
+function log(message) {
+	console.log(`[ATC: ${message}]`);
 }
 
 function updateAutofillDisableState() {
@@ -291,20 +301,25 @@ function updateAutofillDisableState() {
 		}
 	});	
 }
- 
-//on document ready
-$(() => {
-	startATC();
+
+function shouldIgnoreRow(row) {
 	
-	chrome.runtime.onMessage.addListener(
-		(request, sender, sendResponse) => {
-		  if(request.timeEntriesUpdated) {
-			log("Detected time entry change!");
+	var ignoredRows = 
+		["WeekHeaderRow", 
+		"ApprovedPTORow", 
+		"WeekSummary", 
+		"WeekHeaderRow"];
 	
-			updateAutofillDisableState();	
-		  }
+	var shouldIgnore = false;
+	ignoredRows.forEach(c => {
+		if(row.hasClass(c)) {
+			shouldIgnore = true;
+		}
 	});
-});
+	
+	return shouldIgnore;
+}
+
 
 
 
