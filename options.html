@@ -43,6 +43,10 @@
 		.adp-link {
 			float:right;
 		}
+		.muted {
+			opacity: 0.6;
+			font-size: 12px;
+		}
     </style>
   </head>
   <body>
@@ -52,7 +56,13 @@
 		<p><b>The following days are skipped automatically:</b><br/> Weekends, Holidays, PTO/Sick days, and any day with entries already saved</p>	
 		<h4>Time Entries</h4>
 		<p>These are the entries that will be populated for each row in a day and then copied to all days in a pay period. Once entries are added, navigate to ADP's Timecard page and click the <strong>Autofill</strong> button.</p>
-		<div>
+		<div class="form-check">
+			<label class="form-check-label">
+			  <input type="checkbox" class="form-check-input" v-model="salariedMode" v-on:change="saveAllEntries()">
+			  Salaried <span class="muted">(Salaried users have different fields in ADP)</span>
+			</label>
+		  </div>
+		<div v-if="!salariedMode">
 			<table class="table">
 				<thead class="thead-default">
 				<tr>
@@ -63,13 +73,13 @@
 				</tr>
 				</thead>
 				<tbody>
-				<tr v-for="(te, index) in timeEntries">
+				<tr v-for="(te, index) in timeEntries.hourly">
 					<td>{{te.inTime}}</td>
 					<td>{{te.outTime}}</td>
 					<td>{{te.projectCode ? te.projectCode : "None"}}</td>
-					<td><span class="delete-btn" v-on:click="deleteEntryAtIndex(index)"><i class="fa fa-trash-o" aria-hidden="true"></i></span></td>
+					<td><span class="delete-btn" v-on:click="deleteEntryAtIndex('hourly', index)"><i class="fa fa-trash-o" aria-hidden="true"></i></span></td>
 				</tr>
-				<tr v-if="timeEntries.length < 1">
+				<tr v-if="timeEntries.hourly.length < 1">
 					<td style="opacity: 0.5">No entries saved.</td>
 					<td></td>
 					<td></td>
@@ -81,21 +91,63 @@
 				<div class="container">
 					<div class="row">
 						<div class="col">
-							<input type="text" class="form-control" placeholder="In Time" v-model="newEntry.inTime" v-on:change="normalizeTimeForType('in')" v-on:keyup.enter="saveNewEntry">
+							<input type="text" class="form-control" placeholder="In Time" v-model="newEntry.hourly.inTime" v-on:change="normalizeTimeForType('in')" v-on:keyup.enter="saveNewHourlyEntry">
 							<div v-show="errors.invalidInTime" class="error">Invalid time. Expecting: <b>HH:MM AM/PM</b></div>
 						</div>
 						<div class="col">
-							<input type="text" class="form-control" placeholder="Out Time" v-model="newEntry.outTime" v-on:change="normalizeTimeForType('out')" v-on:keyup.enter="saveNewEntry">
+							<input type="text" class="form-control" placeholder="Out Time" v-model="newEntry.hourly.outTime" v-on:change="normalizeTimeForType('out')" v-on:keyup.enter="saveNewHourlyEntry">
 							<div v-show="errors.invalidOutTime" class="error">Invalid time. Expecting: <b>HH:MM AM/PM</b></div>
 						</div>
 						<div class="col">
-							<input type="number" class="form-control" placeholder="Project Code" v-model="newEntry.projectCode" v-on:keyup.enter="saveNewEntry">
+							<input type="number" class="form-control" placeholder="Project Code" v-model="newEntry.hourly.projectCode" v-on:keyup.enter="saveNewHourlyEntry">
 							<div v-show="errors.invalidProjectCode" class="error">Please specify a project code.</div>
 						</div>
 					</div>
 				</div>
 				<div class="entry-btn-wrapper">
-					<button type="button" class="btn btn-primary" v-on:click="saveNewEntry">Add</button>
+					<button type="button" class="btn btn-primary" v-on:click="saveNewHourlyEntry">Add</button>
+					<button type="button" class="btn btn-link" v-on:click="showingAddEntryInputs = false">Cancel</button>
+				</div>
+			</div>
+			<button type="button" class="btn btn-link" v-on:click="showingAddEntryInputs = true" v-if="!showingAddEntryInputs">+ Add Time Entry</button>
+		</div>
+		<div v-if="salariedMode">
+			<table class="table">
+				<thead class="thead-default">
+				<tr>
+					<th>Hours</th>
+					<th>Project Code</th>
+					<th></th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr v-for="(te, index) in timeEntries.salary">
+					<td>{{te.hours}}</td>
+					<td>{{te.projectCode ? te.projectCode : "None"}}</td>
+					<td><span class="delete-btn" v-on:click="deleteEntryAtIndex('salary', index)"><i class="fa fa-trash-o" aria-hidden="true"></i></span></td>
+				</tr>
+				<tr v-if="timeEntries.salary.length < 1">
+					<td style="opacity: 0.5">No entries saved.</td>
+					<td></td>
+					<td></td>
+				</tr>
+				</tbody>
+			</table>
+			<div v-if="showingAddEntryInputs">
+				<div class="container">
+					<div class="row">
+						<div class="col">
+							<input type="number" class="form-control" placeholder="Hours" v-model="newEntry.salary.hours" v-on:keyup.enter="saveNewSalaryEntry">
+							<div v-show="errors.invalidHours" class="error">Please specify hours worked.</div>
+						</div>
+						<div class="col">
+							<input type="number" class="form-control" placeholder="Project Code" v-model="newEntry.salary.projectCode" v-on:keyup.enter="saveNewSalaryEntry">
+							<div v-show="errors.invalidProjectCode" class="error">Please specify a project code.</div>
+						</div>
+					</div>
+				</div>
+				<div class="entry-btn-wrapper">
+					<button type="button" class="btn btn-primary" v-on:click="saveNewSalaryEntry">Add</button>
 					<button type="button" class="btn btn-link" v-on:click="showingAddEntryInputs = false">Cancel</button>
 				</div>
 			</div>

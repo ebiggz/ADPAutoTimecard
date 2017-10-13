@@ -75,7 +75,7 @@ function waitForPageLoad() {
 	setTimeout(() => { waitForPageLoad() }, 1500);
 }
 
-function runATC(timeEntries) {
+function runATC(timeEntries, salariedMode) {
    log("Running autofill...");
    
    if(timeEntries.length < 1) {
@@ -87,7 +87,7 @@ function runATC(timeEntries) {
    spinner.show();
 
    setTimeout(() => {
-		populateRows(timeEntries).then(() => {
+		populateRows(timeEntries, salariedMode).then(() => {
 			spinner.hide();
 			log("Autofill complete!"); 
 		});
@@ -133,7 +133,7 @@ function getDeterminedDayRowCount(daysToCount = 3) {
 	return lowestRowCount;
 }
 
-function populateRows(timeEntries) {
+function populateRows(timeEntries, salariedMode) {
 	return new Promise((resolve, reject) => {
 		var currentDay = null;
 		var rowInCurrentDay = 0;
@@ -141,10 +141,23 @@ function populateRows(timeEntries) {
 		
 		var dayTable = $("#TcGrid"); 
 		var dayRows = dayTable.children().children();
-		//iterate over each row
-		dayRows.each(function(i){
-			var row = $(this);
+		var dayIndex = -1;
+
+		function runNextDay() {
+
+			dayIndex++;
+			if(dayIndex >= dayRows.length) {
+				// we have reached the end.
+				// Click on table to deselect the last input field we edited
+				dayTable.click();
 				
+				resolve();
+				return;
+			}
+			
+			console.log(`Running for index: ${dayIndex}`);
+			var row = $(dayRows[dayIndex]);
+			
 			if(shouldIgnoreRow(row) == false) {
 				
 				//Update our current day and row of that day
@@ -167,53 +180,93 @@ function populateRows(timeEntries) {
 					
 					var timeEntry = timeEntries[rowInCurrentDay];
 					
-					var inTimeDiv = row.find("div[id$=InTime]");
-					var inTimeDivText = inTimeDiv.text();
+					var hoursDiv = row.find("div[id$=Value]");
+					var hoursDivText = hoursDiv.text();
 					
-					//First check if the in time field has anything in it. If it does, we skip the whole day.
-					if(inTimeDivText != null && inTimeDivText.trim() != "") {
+					//First check if the hours field has anything in it. If it does, we skip the whole day.
+					if(hoursDivText != null && hoursDivText.trim() != "0.00") {
 						skipTheRemainderOfTheDay = true;
 					} else {
-						
-						// Handle In-Time
-						inTimeDiv.click();
-						
-						var inTimeTr = row.find("td[id$=InTime]");
-						var inTimeInput = inTimeTr.find(".dijitInputInner");
-						
-						inTimeInput.val(timeEntry.inTime);
-						inTimeInput.keyup();
-						
-						
-						// Handle Out-Time
-						var outTimeDiv = row.find("div[id$=OutTime]");
-						outTimeDiv.click();
-						
-						var outTimeTr = row.find("td[id$=OutTime]");
-						var outTimeInput = outTimeTr.find(".dijitInputInner");				
-						
-						outTimeInput.val(timeEntry.outTime);
-						outTimeInput.keyup();				   
-						
-						// Handle Project Code
-						var projectDiv = row.find("div[id$=WorkedJobID]");
-						projectDiv.click();
-						
-						var projectTr = row.find("td[id$=WorkedJobID]");
-						var projectInput = projectTr.find(".dijitInputInner");
-									  
-						projectInput.val(timeEntry.projectCode);
-						projectInput.keyup();
+						fillInCellsForRow(row, timeEntry, salariedMode).then(()=>{
+							runNextDay();
+						});;
 					}			   
+				} else {
+					runNextDay();
 				}
+			} else {
+				runNextDay();
 			}
-		});
+		}
 		
-		// Click on table to deselect the last input field we edited
-		dayTable.click();
-
-		resolve();
+		//run for the first row/day
+		runNextDay();
 	});
+}
+
+function fillInCellsForRow(row, timeEntry, salariedMode) {
+	return new Promise((resolve, reject) => {
+		if(salariedMode) {
+			// Handle hours
+			var hoursDiv = row.find("div[id$=Value]");
+			hoursDiv.click();
+			
+			var hoursTr = row.find("td[id$=Value]");
+			var hoursInput = hoursTr.find(".dijitInputInner");				
+			
+			hoursInput.sendkeys(timeEntry.hours);
+	
+			setTimeout(() => {
+				// Handle Project Code
+				var projectDiv = row.find("div[id$=WorkedJobID]");
+				projectDiv[0].click();
+	
+				var projectTr = row.find("td[id$=WorkedJobID]");
+				var projectInput = projectTr.find(".dijitInputInner");
+							
+				projectInput.val(timeEntry.projectCode);
+				projectInput.keyup();
+
+				resolve();
+			}, 1);
+	
+		} else {
+			// Handle In-Time
+			var inTimeDiv = row.find("div[id$=InTime]");
+			inTimeDiv.click();
+			
+			var inTimeTr = row.find("td[id$=InTime]");
+			var inTimeInput = inTimeTr.find(".dijitInputInner");
+			
+			inTimeInput.val(timeEntry.inTime);
+			inTimeInput.keyup();
+			
+			
+			// Handle Out-Time
+			var outTimeDiv = row.find("div[id$=OutTime]");
+			outTimeDiv.click();
+			
+			var outTimeTr = row.find("td[id$=OutTime]");
+			var outTimeInput = outTimeTr.find(".dijitInputInner");				
+			
+			outTimeInput.val(timeEntry.outTime);
+			outTimeInput.keyup();
+	
+			setTimeout(() => {
+				// Handle Project Code
+				var projectDiv = row.find("div[id$=WorkedJobID]");
+				projectDiv[0].click();
+	
+				var projectTr = row.find("td[id$=WorkedJobID]");
+				var projectInput = projectTr.find(".dijitInputInner");
+							
+				projectInput.val(timeEntry.projectCode);
+				projectInput.keyup();
+
+				resolve();
+			}, 1);
+		}	
+	});								
 }
 
 function makeSureAutofillButtonExists() {
@@ -242,9 +295,31 @@ function verifyEverythingIsReady(entries) {
 function getTimeEntries() {
 	return new Promise((resolve, reject) => {
 		chrome.storage.sync.get({
-			"timeEntries": []
+			"entries": {
+				hourly: [],
+				salary: []
+			},
+			"salariedMode": false
 		  }, (options) => {
-			  resolve(options.timeEntries)
+			  if(options.salariedMode) {
+				resolve(options.entries.salary)
+			  } else {
+				resolve(options.entries.hourly)
+			  }		  
+		  });
+	});
+}
+
+function getEntriesAndMode() {
+	return new Promise((resolve, reject) => {
+		chrome.storage.sync.get({
+			"entries": {
+				hourly: [],
+				salary: []
+			},
+			"salariedMode": false
+		  }, (options) => {
+			  resolve(options);	  
 		  });
 	});
 }
@@ -259,7 +334,9 @@ function checkForTimeEntries() {
 
 		autofillBtn.click(function(event) {
 			event.preventDefault();
-			getTimeEntries().then((entries) => {
+			getEntriesAndMode().then((options) => {
+				var salariedMode = options.salariedMode;
+				var entries = salariedMode ? options.entries.salary : options.entries.hourly
 				setTimeout(function() {
 					if(!verifyEverythingIsReady(entries)) {
 						$("#error-modal-message").html(`You do not have enough rows per day to autofill your Timecard. <br/><br/>In the bottom right corner, click on <b>Preferences</b> > <b>Rows Per Day</b> and select <b>${entries.length}</b> or higher.`);
@@ -267,7 +344,7 @@ function checkForTimeEntries() {
 						return;
 					}
 					$('.autofill-btn').attr("disabled",true);
-					runATC(entries);
+					runATC(entries, salariedMode);
 			    }, 1);			
 			});		
 		});

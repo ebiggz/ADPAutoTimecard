@@ -1,17 +1,28 @@
 var app = new Vue({
 	el: '#app',
 	data: {
-		timeEntries: [],
+		timeEntries: {
+			hourly: [],
+			salary: []
+		},
+		salariedMode: false,
 		showingAddEntryInputs: false,
 		newEntry: {
-			inTime: "",
-			outTime: "",
-			projectCode: ""
+			hourly: {
+				inTime: "",
+				outTime: "",
+				projectCode: ""
+			},
+			salary: {
+				hours: "",
+				projectCode: ""
+			}
 		},
 		errors: {
 			invalidInTime: false,
 			invalidOutTime: false,
-			invalidProjectCode: false
+			invalidProjectCode: false,
+			invalidHours: false
 		}
 	},
 	methods: {
@@ -22,7 +33,7 @@ var app = new Vue({
 		hasErrors: function() {
 			var app = this;
 			
-			return (app.errors.invalidInTime || app.errors.invalidOutTime || app.errors.invalidProjectCode);
+			return (app.errors.invalidInTime || app.errors.invalidOutTime || app.errors.invalidProjectCode || app.errors.invalidHours);
 		},
 		normalizeTimeString: (rawTime) => {
 			time = rawTime.trim();
@@ -105,27 +116,32 @@ var app = new Vue({
 			var app = this;
 
 			if(type === 'in') {
-				app.newEntry.inTime = app.normalizeTimeString(app.newEntry.inTime.trim());
+				app.newEntry.hourly.inTime = app.normalizeTimeString(app.newEntry.hourly.inTime.trim());
 			} else {
-				app.newEntry.outTime = app.normalizeTimeString(app.newEntry.outTime.trim());
+				app.newEntry.hourly.outTime = app.normalizeTimeString(app.newEntry.hourly.outTime.trim());
 			}
 		},
 		getSavedData: function() {
 			var app = this;
 			chrome.storage.sync.get({
-				"timeEntries": []
+				"entries": {
+					hourly: [],
+					salary: []
+				},
+				"salariedMode": false
 			}, function(options) {
-				app.timeEntries = options.timeEntries;
+				app.timeEntries = options.entries;
+				app.salariedMode = options.salariedMode;
 			});
 		},
-		saveNewEntry: function() {			  
+		saveNewHourlyEntry: function() {			  
 			var app = this;
 			
 			app.errors.invalidInTime = false;
 			app.errors.invalidOutTime = false;
 			app.errors.invalidProjectCode = false;
 			
-			var newEntry = app.newEntry;
+			var newEntry = app.newEntry.hourly;
 			
 			var timeRegex = /^\d{2}:\d{2}\s(A|P)M$/i;	  
 			
@@ -155,18 +171,56 @@ var app = new Vue({
 			newEntry.outTime = newEntry.outTime.toUpperCase();
 			newEntry.projectCode = newEntry.projectCode.toString();		  
 			
-			app.timeEntries.push(newEntry);
+			app.timeEntries.hourly.push(newEntry);
 			
 			app.showingAddEntryInputs = false;
 			
-			app.newEntry = {inTime:"",outTime:"",projectCode:""}
+			app.newEntry.hourly = { inTime:"", outTime:"", projectCode:"" }
 			
 			app.saveAllEntries();
 		},
-		deleteEntryAtIndex: function(index) {
+		saveNewSalaryEntry: function() {			  
 			var app = this;
 			
-			app.timeEntries.splice(index, 1);
+			app.errors.invalidHours = false;
+			app.errors.invalidProjectCode = false;
+			
+			var newEntry = app.newEntry.salary;
+			
+			var hoursValid = newEntry.hours.toString();
+			if(!hoursValid) {
+				app.errors.invalidHours = true;
+			}
+			
+			var projectCodeValid = newEntry.projectCode.toString();
+			if(!projectCodeValid) {
+				app.errors.invalidProjectCode = true;
+			}
+
+			if(app.hasErrors()) {
+				return;
+			}
+			
+			newEntry.hours = newEntry.hours.toString();
+			newEntry.projectCode = newEntry.projectCode.toString();		  
+			
+			app.timeEntries.salary.push(newEntry);
+			
+			app.showingAddEntryInputs = false;
+			
+			app.newEntry.salary = { hours: "", projectCode:"" }
+			
+			app.saveAllEntries();
+		},
+		deleteEntryAtIndex: function(entryType, index) {
+			var app = this;
+			
+			if(entryType === 'salary') {
+				app.timeEntries.salary.splice(index, 1);
+			}
+			else if(entryType === 'hourly') {
+				app.timeEntries.hourly.splice(index, 1);
+			}		
 			
 			app.saveAllEntries();
 		},
@@ -174,16 +228,19 @@ var app = new Vue({
 			var app = this;
 			
 			chrome.storage.sync.set({
-				timeEntries: app.timeEntries
+				entries: app.timeEntries,
+				salariedMode: app.salariedMode
 			}, () => {
 				// let the content script on whatever tab know the entries have been updated
-
-				chrome.tabs.query({}, function(tabs) {
-					var message = { timeEntriesUpdated: true };
-					for (var i=0; i<tabs.length; ++i) {
-						chrome.tabs.sendMessage(tabs[i].id, message);
-					}
-				});
+				app.fireSaveEvent();
+			});
+		},
+		fireSaveEvent: function() {
+			chrome.tabs.query({}, function(tabs) {
+				var message = { timeEntriesUpdated: true };
+				for (var i=0; i<tabs.length; ++i) {
+					chrome.tabs.sendMessage(tabs[i].id, message);
+				}
 			});
 		}
 	},
