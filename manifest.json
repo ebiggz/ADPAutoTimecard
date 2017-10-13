@@ -4,8 +4,13 @@
   "description": "Automatically fill out your timecard with the given project code.",
   "version": "1.1",
   "browser_action": {
-    "default_icon": "images/adp-rebel2.png",
+    "default_icon": "images/atc-rebel16.png",
 	  "default_popup": "options.html"
+  },
+  "icons": {
+    "16": "images/atc-rebel16.png",
+    "48": "images/atc-rebel48.png",
+    "128": "images/atc-rebel128.png"
   },
   "content_scripts": [
     {
