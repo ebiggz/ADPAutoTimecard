@@ -18,6 +18,7 @@ $(() => {
 	});
 });
 
+
 function waitForPageLoad() {
 	
 	var correctPage = false;
@@ -35,17 +36,17 @@ function waitForPageLoad() {
 	}
 
 	if(correctPage) {
+		var body = $("body");
+
 		// add spinner
 		var spinner = $("#atc-loader");
-		if(spinner.length < 1) {
-			var body = $("body");
+		if(spinner.length < 1) {			
 			$(`<div class="fullscreen-center-wrapper" id="atc-loader" style="display:none"><div class="loader"></div></div>`).insertBefore(body);
 		}
 
 		//add error modal
 		var spinner = $("#error-modal-wrapper");
 		if(spinner.length < 1) {
-			var body = $("body");
 			$(`<div class="fullscreen-center-wrapper" id="error-modal-wrapper" style="display:none"><div class="error-modal"><h1>Whoops!</h1><p id="error-modal-message"></p><div><button class="adp-btn okay-btn" id="close-model-btn">Ok</button></div></div></div>`).insertBefore(body);
 
 			$("#close-model-btn").click((event)=> {
@@ -261,8 +262,8 @@ function checkForTimeEntries() {
 			getTimeEntries().then((entries) => {
 				setTimeout(function() {
 					if(!verifyEverythingIsReady(entries)) {
-						$("#error-modal-message").html(`You do not have enough rows per day to fill out your Timecard. <br/><br/>In the bottom right corner, click on <b>Preferences</b> > <b>Rows Per Day</b> and select <b>${entries.length}</b> or higher.`);
-						$("#error-modal-wrapper").show();
+						$("#error-modal-message").html(`You do not have enough rows per day to autofill your Timecard. <br/><br/>In the bottom right corner, click on <b>Preferences</b> > <b>Rows Per Day</b> and select <b>${entries.length}</b> or higher.`);
+						$("#error-modal-wrapper").show();					
 						return;
 					}
 					$('.autofill-btn').attr("disabled",true);
