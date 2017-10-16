@@ -1,6 +1,6 @@
 ## ADP AutoTimecard
 
-A Google Chrome Extension that autofills your Timecard with predefined entries. 
+A Google Chrome Extension that autofills your ADP Timecard with predefined entries. 
 
 ### Installing
 1) Visit the Releases page and download the latest version.
@@ -20,6 +20,6 @@ A Google Chrome Extension that autofills your Timecard with predefined entries.
 
 ### Things To Note
 - ATC does *not* look at or save any sensitive info. It just some hacky jquery that fills out all the appropriate rows in the pay period table.
-- The scipt automatically skips over weekends, PTO/Sick days, holidays, and any days that already have a time entry in it.
+- The script automatically skips over weekends, PTO/Sick days, holidays, and any days that already have a time entry in it.
 - ATC does not automatically save after autofilling. Please confirm the changes to ensure everything is correct before saving.
 - The Extension is provided as is. It should work. But could easily break at any time if ADP changes anything to due with the Timecard page.
