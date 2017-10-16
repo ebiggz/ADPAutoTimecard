@@ -183,12 +183,12 @@ function populateRows(timeEntries, salariedMode) {
 					var hoursDivText = hoursDiv.text();
 					
 					//First check if the hours field has anything in it. If it does, we skip the whole day.
-					if(hoursDivText != null && hoursDivText.trim() != "0.00") {
+					if(hoursDivText != null && hoursDivText.trim() != "0.00" && hoursDivText.trim() != "0:00") {
 						skipTheRemainderOfTheDay = true;
 					} else {
 						fillInCellsForRow(row, timeEntry, salariedMode).then(()=>{
-							runNextDay();
-						});;
+							runNextDay();							
+						});
 					}			   
 				} else {
 					runNextDay();
