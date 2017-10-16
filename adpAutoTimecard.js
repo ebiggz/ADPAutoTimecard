@@ -240,6 +240,14 @@ function fillInCellsForRow(row, timeEntry, salariedMode) {
 	
 		}
 		
+		/*
+		* The 'product code' is put into a timeout block with a sort delay because
+		* the salaried mode "hours" field needs this to be able to be properly filled out.
+		* Not sure why, I am guessing ADP just needs a JS cycle or two to do things before we
+		* edit the next row. Technically, the project code bit doesnt need to be in a timeout block
+		* for the non salaried workflow, but since they both need it, it I just kept it in for both.
+		* Plus this allows us to do scroll to row stuff that makes the autofill more visually interesting.
+		*/
 		setTimeout(() => {
 			// Handle Project Code
 			var projectDiv = row.find("div[id$=WorkedJobID]");
