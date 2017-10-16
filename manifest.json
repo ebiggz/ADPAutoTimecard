@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "ADP Auto Timecard",
   "description": "Automatically fill out your timecard with the given project code. Use: Open up the ATC Options page or click the toolbar icon and add your time entries. Then go to the Timecard page on ADP and click the Autfill button.",
-  "version": "1.3",
+  "version": "1.4",
   "browser_action": {
     "default_icon": "images/atc-rebel16.png",
 	  "default_popup": "options.html"
