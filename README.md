@@ -9,7 +9,7 @@ A Google Chrome Extension that autofills your Timecard with predefined entries.
 
 ### Usage
 #### First Time Setup
-1) Option up the options page (either by clicking **Options** on the Extensions page or clicking the ATC icon in the Chrome toolbar)
+1) Open up the options page (either by clicking **Options** on the Extensions page or clicking the ATC icon in the Chrome toolbar)
 2) If you are salaried, check the **Salaried** checkbox.
 3) Create time entries. Each entry represents one row in a day and will be copied to all days in a pay period.
 
