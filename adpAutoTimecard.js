@@ -155,7 +155,6 @@ function populateRows(timeEntries, salariedMode) {
 				return;
 			}
 			
-			console.log(`Running for index: ${dayIndex}`);
 			var row = $(dayRows[dayIndex]);
 			
 			if(shouldIgnoreRow(row) == false) {
@@ -205,7 +204,8 @@ function populateRows(timeEntries, salariedMode) {
 }
 
 function fillInCellsForRow(row, timeEntry, salariedMode) {
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve, reject) => {	
+
 		if(salariedMode) {
 			// Handle hours
 			var hoursDiv = row.find("div[id$=Value]");
@@ -215,20 +215,6 @@ function fillInCellsForRow(row, timeEntry, salariedMode) {
 			var hoursInput = hoursTr.find(".dijitInputInner");				
 			
 			hoursInput.sendkeys(timeEntry.hours);
-	
-			setTimeout(() => {
-				// Handle Project Code
-				var projectDiv = row.find("div[id$=WorkedJobID]");
-				projectDiv[0].click();
-	
-				var projectTr = row.find("td[id$=WorkedJobID]");
-				var projectInput = projectTr.find(".dijitInputInner");
-							
-				projectInput.val(timeEntry.projectCode);
-				projectInput.keyup();
-
-				resolve();
-			}, 1);
 	
 		} else {
 			// Handle In-Time
@@ -252,20 +238,30 @@ function fillInCellsForRow(row, timeEntry, salariedMode) {
 			outTimeInput.val(timeEntry.outTime);
 			outTimeInput.keyup();
 	
-			setTimeout(() => {
-				// Handle Project Code
-				var projectDiv = row.find("div[id$=WorkedJobID]");
-				projectDiv[0].click();
-	
-				var projectTr = row.find("td[id$=WorkedJobID]");
-				var projectInput = projectTr.find(".dijitInputInner");
-							
-				projectInput.val(timeEntry.projectCode);
-				projectInput.keyup();
+		}
+		
+		setTimeout(() => {
+			// Handle Project Code
+			var projectDiv = row.find("div[id$=WorkedJobID]");
+			projectDiv[0].click();
 
-				resolve();
-			}, 1);
-		}	
+			var projectTr = row.find("td[id$=WorkedJobID]");
+			var projectInput = projectTr.find(".dijitInputInner");
+						
+			projectInput.val(timeEntry.projectCode);
+			projectInput.keyup();
+
+
+			// scroll the row into view, this is an unneeded visual thing, but it looks cool
+			var $container = $('.TcGrid').eq(1),
+			$scrollTo = row;
+		
+			$container.scrollTop(
+				$scrollTo.offset().top - $container.offset().top + $container.scrollTop()
+			);
+
+			resolve();
+		}, 10);
 	});								
 }
 
