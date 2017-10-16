@@ -15,7 +15,7 @@ A Google Chrome Extension that autofills your Timecard with predefined entries.
 
 #### Once A Pay Period
 1) Navigate to ADP's My Timecard page.
-2) Press the new orange **Autifill** button next to the **Save** button.
+2) Press the new orange **Autofill** button next to the **Save** button.
 3) Once ATC has finished, review the changes and click **Save** once satisfied. 
 
 ### Things To Note
