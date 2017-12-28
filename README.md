@@ -5,9 +5,7 @@ A Google Chrome Extension that autofills your ADP Timecard with predefined entri
 ![ATC Preview](https://i.imgur.com/igyD36u.gif)
 
 ### Installing
-1) Visit the [Releases page](https://github.com/ebiggz/ADPAutoTimecard/releases) and download the latest version.
-2) In Chrome, open the Extensions page (Three dots > More tools > Extensions).
-3) Drag the downloaded .crx file into the Extensions page.
+Install from the [Chrome Web Store](https://chrome.google.com/webstore/detail/adp-auto-timecard/dbngdnhnedoenddgbenjakbjikjjclac)
 
 ### Usage
 #### First Time Setup
